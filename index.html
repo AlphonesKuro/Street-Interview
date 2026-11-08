@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Street Interview Randomizer</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;--accent:#111827;--onaccent:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0d10;--card:#16191e;--text:#f3f4f6;--muted:#9ca3af;--line:#262b33;--accent:#f3f4f6;--onaccent:#111827}}
+:root[data-theme="dark"]{--bg:#0b0d10;--card:#16191e;--text:#f3f4f6;--muted:#9ca3af;--line:#262b33;--accent:#f3f4f6;--onaccent:#111827}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*{box-sizing:border-box}
+body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.app{min-height:100%;display:flex;flex-direction:column;padding:16px;gap:14px;max-width:560px;margin:0 auto}
+h1{font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:4px 0 0;text-align:center}
+.card{flex:1;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:24px 20px;display:flex;flex-direction:column;justify-content:center;gap:14px;min-height:260px}
+.cat{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.num{font-size:44px;font-weight:800;line-height:1}
+.q{font-size:clamp(20px,5.6vw,28px);font-weight:700;line-height:1.3;margin:0}
+.q.rolling{opacity:.55}
+.btn{border:0;border-radius:16px;font-size:20px;font-weight:800;padding:20px;width:100%;cursor:pointer;color:#fff}
+.roll{background:var(--accent);color:var(--onaccent)}
+.roll:disabled{opacity:.5}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.agree{background:#16a34a}.dis{background:#dc2626}
+.hide{display:none}
+.count{font-size:12px;color:var(--muted);text-align:center}
+#full{position:fixed;inset:0;z-index:99;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff;padding:24px;
+padding-top:calc(24px + env(safe-area-inset-top,0px));padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+#full.on{display:flex}
+#full .w{font-size:clamp(44px,15vw,120px);font-weight:900;letter-spacing:.02em}
+#full .qs{font-size:16px;opacity:.85;max-width:520px;margin-top:20px;line-height:1.4}
+#full .hint{position:absolute;bottom:calc(20px + env(safe-area-inset-bottom,0px));font-size:13px;opacity:.7}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Street Interview</h1>
+  <div class="card">
+    <div class="cat" id="cat">Siap?</div>
+    <p class="q" id="q">Tekan ROLL buat ambil kartu.</p>
+  </div>
+  <div class="row hide" id="choices">
+    <button class="btn agree" id="bA">Agree</button>
+    <button class="btn dis" id="bD">Disagree</button>
+  </div>
+  <button class="btn roll" id="roll">ROLL</button>
+  <div class="count" id="count"></div>
+</div>
+<div id="full"><div class="w" id="fw"></div><div class="qs" id="fq"></div><div class="hint">Tap di mana saja buat tutup</div></div>
+<script>
+var Q=[
+"Loyalitas di perusahaan itu mitos. Pindah kerja tiap 2 tahun adalah cara tercepat naikin gaji.",
+"Gaji 2 digit di umur 20-an itu udah jadi standar, bukan pencapaian luar biasa lagi.",
+"Orang introvert susah naik jabatan karena selalu kalah vokal sama yang ekstrovert.",
+"Ijazah cuma formalitas masuk pintu, 90% kerjaan dipelajari dari nol pas udah masuk.",
+"Skill “Pintar Cari Muka” jauh lebih nentuin kenaikan karir dibanding hard skill.",
+"Overtime tanpa uang lembur itu bentuk eksploitasi, bukan bukti komitmen kerja.",
+"Atasan yang terlalu baik dan fleksibel justru bikin tim gak berkembang.",
+"Kerja sesuai passion itu jebakan. Pilih kerjaan yang gajinya gede, hobinya di luar jam kerja.",
+"Work-Life Balance di awal karir itu omong kosong kalau mau sukses cepet.",
+"Punya side hustle itu wajib, mengandalkan 1 sumber gaji dari kantor itu terlalu berisiko.",
+"Bikin bisnis bareng teman dekat adalah awal dari rusaknya pertemanan.",
+"Modal uang itu nomor sekian. Yang bikin bisnis jalan duluan itu keberanian eksekusi.",
+"Strategi bakar uang dan banting harga itu cara bisnis bodoh yang gak bakal bertahan lama.",
+"Di era sekarang, strategi branding & konten viral jauh lebih penting dari kualitas produk.",
+"Resign demi ngejar passion itu ide buruk kalau belum ada cash flow yang jelas.",
+"Lebih baik punya bisnis kecil tapi profit 100% milik sendiri daripada bisnis gede tapi dikontrol investor.",
+"Semua orang bisa jadi bos, tapi gak semua orang punya mental jadi pengusaha.",
+"Bisnis yang gak punya jalur online atau media sosial bakal gulung tikar dalam 3 tahun.",
+"Diskon gede-gedean cuma ngerusak image produk dan bikin pembeli gak setia.",
+"Gagal di bisnis pertama itu pasti terjadi, bukan cuma sekadar kemungkinan.",
+"Gaya hidup hemat ekstrem itu nyiksa. Mending fokus mikirin cara naikin income.",
+"Punya rumah sendiri sebelum umur 30 tahun itu cuma beban gengsi, mending ngontrak.",
+"Kartu kredit dan Paylater itu alat keuangan cerdas, bukan sumber masalah utang.",
+"Investasi leher ke atas (skill/kursus) jauh lebih untung dibanding nanam saham atau kripto.",
+"Nabung uang di bank tiap bulan tanpa diputar itu rugi tergerus inflasi.",
+"Lebih baik terlihat miskin tapi tabungan tebal, daripada terlihat kaya tapi cicilan numpuk.",
+"Orang yang bilang “Uang gak bisa beli kebahagiaan” biasanya belum pernah pegang uang banyak.",
+"Beli barang branded itu 90% buat nyari pengakuan orang lain, bukan karena kualitasnya.",
+"Frugal living cuma cocok buat orang yang emang income-nya udah gede dan stabil.",
+"Menikah tanpa kesiapan finansial yang matang itu bentuk tindakan tidak bertanggung jawab.",
+"Sistem WFH/Hybrid bikin karyawan jauh lebih produktif dibanding kerja penuh di kantor.",
+"Punya teman dekat di tempat kerja itu toxic, hubungan kerja harus murni profesional.",
+"Bahas nominal gaji secara terbuka antar sesama rekan kerja itu hal yang salah dan tabu.",
+"Balas WA atau email kerjaan di luar jam kantor itu kebiasaan buruk yang harus dihentikan.",
+"Gen Z lebih berani vokal di kantor bukan karena manja, tapi karena tahu hak mereka.",
+"Meeting yang durasinya lebih dari 1 jam itu 80%-nya cuma buang-buang waktu.",
+"Karyawan yang sering pulang tenggo pas jam kerja selesai sering dinilai kurang niat.",
+"Budaya “kekeluargaan” di perusahaan biasanya cuma taktik manajemen buat nutupin gaji kecil.",
+"Pindah-pindah industri pas cari kerja bikin karir gak punya fokus yang jelas.",
+"Skill komunikasi dan storytelling jauh lebih mahal nilainya dibanding skill teknis."
+];
+var E=[
+"Setia sama 1 perusahaan sampai puluhan tahun itu bentuk kenyamanan pasif, bukan prestasi.",
+"Gaji di bawah 10 juta di Jakarta cuma cukup buat bertahan hidup, bukan buat berkembang.",
+"Kemampuan “self-promotion” jauh lebih dihargai atasan ketimbang hasil kerja diam-diam.",
+"Gelar S2 tanpa pengalaman kerja lapangan itu percuma dan cuma bikin overqualified.",
+"Membangun kedekatan personal sama bos jauh lebih efektif daripada kerja keras 12 jam sehari.",
+"Perusahaan yang minta karyawan “loyal tanpa batas” biasanya manajemennya pelit.",
+"Bos yang killer dan demanding justru lebih cepat membentuk profesional yang tangguh.",
+"Mengejar passion tanpa memperhitungkan potensi pasar adalah resep pasti menuju kebangkrutan.",
+"Di umur 20-an, waktu tidur dan bersosialisasi memang harus dikorbankan demi akselerasi karir.",
+"Karyawan yang gak punya income cadangan gampang diintimidasi oleh manajemen.",
+"Bisnis keluarga atau bareng teman cuma bakal bikin pengambilan keputusan jadi emosional.",
+"Terlalu lama bikin rencana bisnis (business plan) cuma bentuk ketakutan untuk memulai.",
+"Startup yang fokus pada growth tanpa profitabilitas sejati cuma bubble yang tinggal menunggu pecah.",
+"Produk biasa saja dengan pemasaran yang hebat selalu mengalahkan produk hebat dengan pemasaran biasa.",
+"Nekat jadi full-time entrepreneur tanpa dana darurat 6 bulan itu tindakan bodoh, bukan pemberani.",
+"Mengambil dana investor (VC) itu sejatinya menjual kebebasan dan jiwa bisnis kita sendiri.",
+"Kebanyakan orang cuma suka status “Founder”, bukan tekanan dan beban finansialnya.",
+"Toko fisik tanpa kehadiran digital sekarang cuma menunggu waktu untuk bangkrut.",
+"Pelanggan yang berburu diskon adalah pelanggan paling tidak loyal dan paling banyak menuntut.",
+"Sebelum merasakan rugi ratusan juta, seseorang belum bisa disebut pengusaha sejati.",
+"Menolak ngopi mahal demi hemat 50 ribu per hari gak akan pernah bikin kita kaya.",
+"Membeli rumah dengan KPR 20 tahun adalah bentuk jebakan finansial jangka panjang terbesar.",
+"Masalah keuangan bukan berasal dari kartu kredit, tapi dari tingkat kontrol diri penggunanya.",
+"Bermain saham atau kripto tanpa keahlian teknis yang matang sebanding dengan judi.",
+"Menyimpan uang tunai di tabungan biasa sama saja secara perlahan membuang kekayaan.",
+"Orang yang benar-benar kaya biasanya tampil paling sederhana di depan umum.",
+"Uang memang tidak bisa menyelesaikan semua masalah, tapi hampir semua masalah butuh uang.",
+"Membeli barang mewah demi mengesan orang yang tidak kita sukai adalah kesepakatan buruk.",
+"Orang berpenghasilan pas-pasan yang menerapkan frugal living cuma membatasi potensi diri.",
+"Cinta tidak bisa memberi makan, kesiapan ekonomi adalah fondasi utama sebuah pernikahan.",
+"Kerja dari kantor 5 hari seminggu adalah konsep kuno yang cuma membuang energi di jalan.",
+"Mencampuradukkan pertemanan pribadi dengan pekerjaan adalah sumber utama konflik kantor.",
+"Transparansi gaji di tempat kerja cuma akan memicu rasa iri dan menurunkan kecintaan pada tim.",
+"Karyawan yang selalu siap dihubungi 24/7 tidak akan dihargai, melainkan dimanfaatkan.",
+"Generasi senior sering mengkritik Gen Z hanya karena mereka iri tak seberani itu dulu.",
+"Kebanyakan meeting sebenarnya bisa digantikan dengan dokumen satu halaman atau pesan tertulis.",
+"Menilai kinerja berdasarkan jam hadir di kantor adalah tanda kegagalan kepemimpinan.",
+"Ketika perusahaan mulai bicara tentang “keluarga”, itu saatnya kamu bersiap untuk eksploitasi.",
+"Menjadi spesialis di satu bidang spesifik jauh lebih mahal harganya dibanding menjadi generalis.",
+"Kemampuan menyampaikan ide secara persuasif jauh lebih berharga daripada kemampuan mengeksekusinya."
+];
+Q=Q.concat(E);
+var CATS=["Karir & Realita Dunia Kerja","Bisnis, Startup & Entrepreneurship","Finansial, Gaji & Mindset Uang","Work Dynamic & Culture"];
+var $=function(i){return document.getElementById(i)};
+var deck=[],cur=-1,busy=false;
+function pad(n){return "#"+(n<10?"0":"")+n}
+function show(i,rolling){
+  $("cat").textContent=CATS[Math.floor((i%40)/10)];
+  $("q").textContent=Q[i];
+  $("q").className="q"+(rolling?" rolling":"");
+}
+function refill(){
+  deck=Q.map(function(_,i){return i});
+  for(var i=deck.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=deck[i];deck[i]=deck[j];deck[j]=t}
+  if(deck[deck.length-1]===cur){deck.unshift(deck.pop())}
+}
+function updateCount(){$("count").textContent="Sisa kartu di putaran ini: "+deck.length+" dari "+Q.length}
+$("roll").onclick=function(){
+  if(busy)return;
+  if(!deck.length)refill();
+  busy=true;
+  $("roll").disabled=true;
+  $("choices").classList.add("hide");
+  var pick=deck.pop();
+  var step=0,total=22;
+  (function tick(){
+    step++;
+    if(step>=total){cur=pick;show(pick,false);busy=false;$("roll").disabled=false;$("roll").textContent="ROLL LAGI";$("choices").classList.remove("hide");updateCount();return}
+    var r;do{r=Math.floor(Math.random()*Q.length)}while(r===pick&&step<total-1&&false);
+    show(r,true);
+    setTimeout(tick,45+step*step*0.6);
+  })();
+};
+function openFull(agree){
+  var f=$("full");
+  f.style.background=agree?"#16a34a":"#dc2626";
+  $("fw").textContent=agree?"AGREE":"DISAGREE";
+  $("fq").textContent=Q[cur];
+  f.classList.add("on");
+  try{var p=document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();if(p&&p.catch)p.catch(function(){})}catch(e){}
+}
+function closeFull(){
+  $("full").classList.remove("on");
+  try{if(document.fullscreenElement){var p=document.exitFullscreen();if(p&&p.catch)p.catch(function(){})}}catch(e){}
+}
+$("bA").onclick=function(){openFull(true)};
+$("bD").onclick=function(){openFull(false)};
+$("full").onclick=closeFull;
+</script>
+</body>
+</html>
